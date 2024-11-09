@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 
 app.use(cors({
-  origin: 'https://backend-bloco-de-notas.onrender.com',
+  origin: 'https://ppads-git-main-vincius-projects-d504bb97.vercel.app/',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
