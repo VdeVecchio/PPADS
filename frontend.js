@@ -4,52 +4,122 @@ let notaEmEdicao = null;  // Variável para armazenar o índice da nota que est�
 function salvarNota() {
   const titulo = document.getElementById('notaTitulo').value;
   const conteudo = document.getElementById('notaContent').value;
+  const token = localStorage.getItem('token');
 
-  // Verifica se há conteúdo e título antes de salvar
-  if (titulo.trim() === '' || conteudo.trim() === '') {
-    alert('Por favor, preencha o título e o conteúdo da nota.');
+  if (!titulo || !conteudo) {
+    alert('Preencha o título e o conteúdo da nota');
     return;
   }
 
   if (notaEmEdicao === null) {
-    // Criar uma nova nota (POST)
+    // Criar uma nova nota
     fetch('http://localhost:3000/notas', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token,
       },
-      body: JSON.stringify({ titulo, conteudo }),  // Enviar o título e o conteúdo da nota como JSON
+      body: JSON.stringify({ titulo, conteudo }),
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Erro ao salvar nota');
-      }
-      return response.text();
-    })
-    .then(data => {
-      console.log(data);  // Exibir a resposta no console
-      atualizarListaNotas();  // Atualizar a lista de notas
-      limparCampos();  // Limpar os campos de título e conteúdo após salvar
-    })
-    .catch(error => console.error('Erro ao salvar nota:', error));
+      .then(response => response.text())
+      .then(() => {
+        atualizarListaNotas();
+        limparCampos();
+      })
+      .catch(error => console.error('Erro ao salvar nota:', error));
   } else {
-    // Atualizar uma nota existente (PUT)
+    // Atualizar uma nota existente
     fetch(`http://localhost:3000/notas/${notaEmEdicao}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token,
       },
       body: JSON.stringify({ titulo, conteudo }),
     })
-    .then(response => response.text())
-    .then(data => {
-      console.log(data);  // Exibir a resposta no console
-      atualizarListaNotas();  // Atualizar a lista de notas
-      notaEmEdicao = null;  // Limpar a variável após a edição
-      limparCampos();  // Limpar os campos de título e conteúdo
-    })
-    .catch(error => console.error('Erro ao editar nota:', error));
+      .then(response => response.text())
+      .then(() => {
+        atualizarListaNotas();
+        limparCampos();
+        notaEmEdicao = null;  // Limpar a edição
+      })
+      .catch(error => console.error('Erro ao editar nota:', error));
   }
+}
+
+// Função para carregar e exibir as notas
+function atualizarListaNotas() {
+  const token = localStorage.getItem('token');
+  fetch('http://localhost:3000/notas', {
+    method: 'GET',
+    headers: {
+      'Authorization': token,
+    },
+  })
+    .then(response => response.json())
+    .then(notas => {
+      const notasList = document.getElementById('notasList');
+      notasList.innerHTML = '';  // Limpar a lista
+
+      notas.forEach((nota, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        // Limita o conteúdo a 15 caracteres e adiciona "..." se for maior
+        const conteudoPreview = nota.conteudo.length > 15 ? nota.conteudo.substring(0, 15) + '...' : nota.conteudo;
+
+        li.innerHTML = `<strong>${nota.titulo}</strong> - ${conteudoPreview}`;
+
+        // Botões de Editar e Excluir
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+
+        // Botão Editar
+        const btnEditar = document.createElement('button');
+        btnEditar.className = 'btn btn-warning btn-sm';
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = () => editarNota(index, nota.titulo, nota.conteudo);
+
+        // Botão Excluir
+        const btnExcluir = document.createElement('button');
+        btnExcluir.className = 'btn btn-danger btn-sm';
+        btnExcluir.textContent = 'Excluir';
+        btnExcluir.onclick = () => excluirNota(index);
+
+        btnGroup.appendChild(btnEditar);
+        btnGroup.appendChild(btnExcluir);
+        li.appendChild(btnGroup);
+
+        notasList.appendChild(li);
+      });
+    })
+    .catch(error => console.error('Erro ao carregar notas:', error));
+}
+
+// Função para carregar uma nota no campo para edição
+function editarNota(id, titulo, conteudo) {
+  document.getElementById('notaTitulo').value = titulo;
+  document.getElementById('notaContent').value = conteudo;
+  notaEmEdicao = id;  // Define a nota que está sendo editada
+}
+
+// Função para excluir uma nota
+function excluirNota(id) {
+  const token = localStorage.getItem('token');
+  fetch(`http://localhost:3000/notas/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': token,
+    },
+  })
+    .then(response => {
+      if (response.ok) {
+        atualizarListaNotas();  // Atualiza a lista após exclusão
+      } else {
+        console.error('Erro ao excluir nota:', response.statusText);
+      }
+    })
+    .catch(error => console.error('Erro ao excluir nota:', error));
 }
 
 // Função para limpar os campos de título e conteúdo
@@ -58,73 +128,11 @@ function limparCampos() {
   document.getElementById('notaContent').value = '';
 }
 
-// Função para buscar e exibir as notas salvas no backend
-function atualizarListaNotas() {
-  const notasList = document.getElementById('notasList');
-
-  // Fazer uma requisição GET para pegar as notas do backend
-  fetch('http://localhost:3000/notas')
-    .then(response => response.json())  // Pegar a resposta como JSON
-    .then(notas => {
-      // Limpar a lista de notas
-      notasList.innerHTML = '';
-
-      // Adicionar cada nota na lista com os botões de edição e exclusão
-      notas.forEach((nota, index) => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.textContent = nota.titulo;  // Exibir o título da nota na lista
-
-        // Criar um container flexível para os botões
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'btn-group-nota';
-
-        // Botão de editar
-        const btnEditar = document.createElement('button');
-        btnEditar.className = 'btn btn-warning btn-sm';
-        btnEditar.textContent = 'Editar';
-        btnEditar.onclick = () => editarNota(index, nota.titulo, nota.conteudo);
-
-        // Botão de excluir
-        const btnExcluir = document.createElement('button');
-        btnExcluir.className = 'btn btn-danger btn-sm';
-        btnExcluir.textContent = 'Excluir';
-        btnExcluir.onclick = () => excluirNota(index);  // Chamar a função de excluir nota
-
-        // Adicionar os botões ao container flexível
-        btnGroup.appendChild(btnEditar);
-        btnGroup.appendChild(btnExcluir);
-
-        // Adicionar o grupo de botões ao item da lista
-        li.appendChild(btnGroup);
-        notasList.appendChild(li);
-      });
-    })
-    .catch(error => console.error('Erro ao carregar notas:', error));
+// Função de logout
+function logout() {
+  localStorage.removeItem('token');  // Remove o token do localStorage
+  window.location.href = 'login.html';  // Redireciona para a página de login
 }
 
-// Função para carregar uma nota no campo de texto para edição
-function editarNota(id, titulo, conteudo) {
-  notaEmEdicao = id;  // Armazenar o índice da nota que está sendo editada
-  document.getElementById('notaTitulo').value = titulo;  // Carregar o título da nota no campo de título
-  document.getElementById('notaContent').value = conteudo;  // Carregar o conteúdo da nota no campo de texto
-}
-
-// Função para excluir uma nota
-function excluirNota(id) {
-  // Fazer uma requisição DELETE para o backend
-  fetch(`http://localhost:3000/notas/${id}`, {
-    method: 'DELETE',
-  })
-    .then(response => {
-      if (response.ok) {
-        atualizarListaNotas();  // Atualizar a lista de notas após a exclusão
-      } else {
-        console.error('Erro ao excluir nota:', response.statusText);
-      }
-    })
-    .catch(error => console.error('Erro ao excluir nota:', error));
-}
-
-// Atualiza a lista de notas quando a página é carregada
+// Atualizar a lista de notas quando a página é carregada
 window.onload = atualizarListaNotas;
