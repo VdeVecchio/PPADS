@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 const app = express();
 
-const mongoURI = 'mongodb+srv://PPADS:PP@D5M@CK@cluster0.jdl8v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const mongoURI = 'mongodb+srv://PPADS:Gxc7kIuKefzzHjoo@cluster0.jdl8v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 // Conectando ao MongoDB Atlas
 mongoose.connect(mongoURI, {
