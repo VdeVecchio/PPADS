@@ -13,9 +13,9 @@ const app = express();
 // Configuração do middleware CORS
 app.use(
   cors({
-    origin: "*", // Substitua pela URL do frontend hospedado no Vercel
+    origin: "https://ppads-two.vercel.app", // Substitua pela URL correta do frontend no Vercel
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"], // Adiciona suporte ao cabeçalho Authorization
   })
 );
 
