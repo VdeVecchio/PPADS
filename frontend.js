@@ -1,31 +1,6 @@
 const API_URL = "https://backend-bloco-de-notas.onrender.com";
 
-// Função para criar uma nova nota
-async function criarNota(titulo, conteudo) {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_URL}/notas`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ titulo, conteudo }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Erro ao criar nota");
-    }
-
-    alert("Nota criada com sucesso!");
-    carregarNotas(); // Atualiza a lista de notas
-  } catch (error) {
-    console.error(error.message);
-    alert(error.message);
-  }
-}
-
-// Função para carregar as notas
+// Função para carregar as notas do backend
 async function carregarNotas() {
   try {
     const token = localStorage.getItem("token");
@@ -41,40 +16,64 @@ async function carregarNotas() {
     }
 
     const notas = await response.json();
-    exibirNotas(notas); // Renderiza as notas
+    exibirNotas(notas);
   } catch (error) {
     console.error(error.message);
-    alert(error.message);
+    alert("Erro ao carregar notas: " + error.message);
   }
 }
 
 // Função para exibir notas na interface
 function exibirNotas(notas) {
-  const lista = document.querySelector("#listaNotas");
+  const lista = document.querySelector("#notasList");
   lista.innerHTML = ""; // Limpa a lista antes de renderizar
 
   notas.forEach((nota) => {
     const item = document.createElement("li");
-    item.textContent = `${nota.titulo}: ${nota.conteudo}`;
+    item.className = "list-group-item";
+    item.textContent = `${nota.titulo}: ${nota.conteudo.substring(0, 15)}...`; // Limita o conteúdo a 15 caracteres
     lista.appendChild(item);
   });
 }
 
+// Função para salvar uma nova nota
+async function salvarNota(titulo, conteudo) {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`${API_URL}/notas`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ titulo, conteudo }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao salvar nota");
+    }
+
+    alert("Nota salva com sucesso!");
+    carregarNotas(); // Atualiza a lista de notas
+  } catch (error) {
+    console.error(error.message);
+    alert("Erro ao salvar nota: " + error.message);
+  }
+}
+
 // Função de logout
 function logout() {
-  localStorage.removeItem("token"); // Remove o token do localStorage
+  localStorage.removeItem("token");
   alert("Logout realizado com sucesso!");
   window.location.href = "login.html"; // Redireciona para a página de login
 }
 
-// Eventos de clique
-document.querySelector("#criarNotaButton").onclick = () => {
-  const titulo = document.querySelector("#titulo").value;
-  const conteudo = document.querySelector("#conteudo").value;
-  criarNota(titulo, conteudo);
-};
-
-document.querySelector("#logoutButton").onclick = logout;
-
-// Carregar notas ao carregar a página
-document.addEventListener("DOMContentLoaded", carregarNotas);
+// Inicializa os eventos e carrega as notas
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelector("#criarNotaButton").onclick = () => {
+    const titulo = document.querySelector("#notaTitulo").value;
+    const conteudo = document.querySelector("#notaContent").value;
+    salvarNota(titulo, conteudo);
+  };
+  carregarNotas();
+});
