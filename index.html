@@ -1,42 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bloco de Notas</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    /* Estilo para o botão de logout no canto superior direito */
-    .logout-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloco de Notas</title>
 </head>
 <body>
-  <!-- Botão de Logout no canto superior direito -->
-  <button class="btn btn-secondary logout-btn" onclick="logout()">Logout</button>
-
-  <div class="container mt-4">
     <h1>Bloco de Notas</h1>
-    <div class="row">
-      <div class="col-4">
-        <h3>Suas Notas</h3>
-        <ul id="notasList" class="list-group">
-          <!-- Lista de notas vai aqui -->
-        </ul>
-      </div>
-
-      <div class="col-8">
-        <h3>Nova Nota</h3>
-        <input type="text" id="notaTitulo" class="form-control mb-2" placeholder="Título da Nota" />
-        <textarea id="notaContent" class="form-control" rows="10" placeholder="Conteúdo da Nota"></textarea>
-        <button class="btn btn-primary mt-2" onclick="salvarNota()">Salvar Nota</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="frontend.js"></script>
+    <button id="logoutButton">Logout</button>
+    <input type="text" id="titulo" placeholder="Título da Nota" />
+    <textarea id="conteudo" placeholder="Conteúdo da Nota"></textarea>
+    <button id="criarNotaButton">Criar Nota</button>
+    <ul id="listaNotas"></ul>
+    <script src="frontend.js"></script>
 </body>
 </html>
