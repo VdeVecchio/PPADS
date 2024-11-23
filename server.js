@@ -8,7 +8,7 @@ const app = express();
 
 // Configuração do CORS para permitir requisições do frontend hospedado no Vercel
 app.use(cors({
-  origin: 'https://ppads-vincius-projects-d504bb97.vercel.app', // URL do frontend
+  origin: 'https://ppads-vincius-projects-d504bb97.vercel.app/', // URL do frontend 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
