@@ -1,25 +1,32 @@
-function login() {
-  const email = document.getElementById('email').value;
-  const senha = document.getElementById('senha').value;
+const API_URL = "https://backend-bloco-de-notas.onrender.com";
 
-  fetch('http://localhost:3000/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, senha }),
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.token) {
-        // Armazena o token no localStorage
-        localStorage.setItem('token', data.token);
-        alert('Login realizado com sucesso');
-        // Redireciona para a página principal
-        window.location.href = 'index.html';
-      } else {
-        alert('Email ou senha inválidos');
-      }
-    })
-    .catch(error => console.error('Erro no login:', error));
+async function login(email, senha) {
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, senha }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro no login');
+    }
+
+    const data = await response.json();
+    console.log('Login bem-sucedido:', data);
+    localStorage.setItem('token', data.token); // Armazena o token JWT no localStorage
+    alert('Login realizado com sucesso!');
+    window.location.href = "index.html"; // Redireciona para a página principal
+  } catch (error) {
+    console.error('Erro no login:', error);
+    alert('Erro ao logar: ' + error.message);
+  }
 }
+
+document.querySelector("#loginButton").onclick = () => {
+  const email = document.querySelector("#email").value;
+  const senha = document.querySelector("#senha").value;
+  login(email, senha);
+};
