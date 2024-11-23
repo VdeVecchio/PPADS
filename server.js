@@ -30,7 +30,15 @@ const NotaSchema = new mongoose.Schema({
 
 const Nota = mongoose.model("Nota", NotaSchema);
 
-// Rota para carregar notas (sem autenticação)
+// Modelo de Usuário no MongoDB
+const UsuarioSchema = new mongoose.Schema({
+  email: { type: String, unique: true, required: true },
+  senha: { type: String, required: true },
+});
+
+const Usuario = mongoose.model("Usuario", UsuarioSchema);
+
+// Rota para carregar notas
 app.get("/notas", async (req, res) => {
   try {
     const notas = await Nota.find(); // Busca todas as notas no banco
@@ -41,7 +49,7 @@ app.get("/notas", async (req, res) => {
   }
 });
 
-// Rota para salvar uma nova nota (sem autenticação)
+// Rota para salvar uma nova nota
 app.post("/notas", async (req, res) => {
   const { titulo, conteudo } = req.body;
 
@@ -56,6 +64,32 @@ app.post("/notas", async (req, res) => {
   } catch (error) {
     console.error("Erro ao salvar nota:", error);
     res.status(500).json({ message: "Erro ao salvar nota." });
+  }
+});
+
+// Rota para registrar um novo usuário
+app.post("/register", async (req, res) => {
+  const { email, senha } = req.body;
+
+  if (!email || !senha) {
+    return res.status(400).json({ message: "Email e senha são obrigatórios." });
+  }
+
+  try {
+    // Verifica se o email já está registrado
+    const usuarioExistente = await Usuario.findOne({ email });
+    if (usuarioExistente) {
+      return res.status(400).json({ message: "Email já registrado." });
+    }
+
+    // Cria um novo usuário
+    const novoUsuario = new Usuario({ email, senha });
+    await novoUsuario.save();
+
+    res.status(201).json({ message: "Usuário registrado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao registrar usuário:", error);
+    res.status(500).json({ message: "Erro ao registrar usuário." });
   }
 });
 
