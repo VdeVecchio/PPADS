@@ -1,7 +1,21 @@
 const API_URL = "https://backend-bloco-de-notas.onrender.com";
 
-async function registrar(email, senha) {
+async function registrar() {
   try {
+    const email = document.querySelector("#email").value;
+    const senha = document.querySelector("#senha").value;
+    const confirmaSenha = document.querySelector("#confirmaSenha").value;
+
+    if (!email || !senha || !confirmaSenha) {
+      alert("Por favor, preencha todos os campos!");
+      return;
+    }
+
+    if (senha !== confirmaSenha) {
+      alert("As senhas não conferem!");
+      return;
+    }
+
     const response = await fetch(`${API_URL}/register`, {
       method: "POST",
       headers: {
@@ -11,7 +25,7 @@ async function registrar(email, senha) {
     });
 
     if (!response.ok) {
-      throw new Error("Erro no registro");
+      throw new Error("Erro ao registrar. Tente novamente.");
     }
 
     alert("Registro realizado com sucesso!");
@@ -21,9 +35,3 @@ async function registrar(email, senha) {
     alert(error.message);
   }
 }
-
-document.querySelector("#registerButton").onclick = () => {
-  const email = document.querySelector("#email").value;
-  const senha = document.querySelector("#senha").value;
-  registrar(email, senha);
-};
