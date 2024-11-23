@@ -1,7 +1,15 @@
 const API_URL = "https://backend-bloco-de-notas.onrender.com";
 
-async function login(email, senha) {
+async function login() {
   try {
+    const email = document.querySelector("#email").value;
+    const senha = document.querySelector("#senha").value;
+
+    if (!email || !senha) {
+      alert("Por favor, preencha todos os campos!");
+      return;
+    }
+
     const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: {
@@ -11,11 +19,11 @@ async function login(email, senha) {
     });
 
     if (!response.ok) {
-      throw new Error("Erro no login");
+      throw new Error("Erro no login. Verifique suas credenciais.");
     }
 
     const data = await response.json();
-    localStorage.setItem("token", data.token); // Armazena o token
+    localStorage.setItem("token", data.token); // Salva o token no localStorage
     alert("Login realizado com sucesso!");
     window.location.href = "index.html"; // Redireciona para a página principal
   } catch (error) {
@@ -23,9 +31,3 @@ async function login(email, senha) {
     alert(error.message);
   }
 }
-
-document.querySelector("#loginButton").onclick = () => {
-  const email = document.querySelector("#email").value;
-  const senha = document.querySelector("#senha").value;
-  login(email, senha);
-};
