@@ -1,7 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
 const mongoose = require("mongoose");
 
 // Configuração do banco de dados MongoDB
@@ -12,59 +10,56 @@ mongoose
 
 const app = express();
 
+// Configuração do middleware CORS
 app.use(
   cors({
-    origin: "https://ppads-two.vercel.app", // Substitua pela URL do frontend no Vercel
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: "https://ppads-two.vercel.app", // Substitua pela URL do frontend hospedado no Vercel
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 
+// Middleware para interpretar JSON no corpo da requisição
 app.use(express.json());
 
-// Modelo de Nota
+// Modelo de Nota no MongoDB
 const NotaSchema = new mongoose.Schema({
   titulo: String,
   conteudo: String,
-  email: String,
 });
 
 const Nota = mongoose.model("Nota", NotaSchema);
 
-// Middleware de Autenticação
-function autenticarToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({ message: "Token não fornecido." });
+// Rota para carregar notas (sem autenticação)
+app.get("/notas", async (req, res) => {
+  try {
+    const notas = await Nota.find(); // Busca todas as notas no banco
+    res.status(200).json(notas);
+  } catch (error) {
+    console.error("Erro ao carregar notas:", error);
+    res.status(500).json({ message: "Erro ao carregar notas." });
   }
-
-  jwt.verify(token, process.env.SECRET, (err, usuario) => {
-    if (err) {
-      return res.status(403).json({ message: "Token inválido." });
-    }
-    req.usuario = usuario;
-    next();
-  });
-}
-
-// Rotas
-app.get("/notas", autenticarToken, async (req, res) => {
-  const notas = await Nota.find({ email: req.usuario.email });
-  res.status(200).json(notas);
 });
 
-app.post("/notas", autenticarToken, async (req, res) => {
+// Rota para salvar uma nova nota (sem autenticação)
+app.post("/notas", async (req, res) => {
   const { titulo, conteudo } = req.body;
+
   if (!titulo || !conteudo) {
-    return res.status(400).json({ message: "Título e conteúdo obrigatórios." });
+    return res.status(400).json({ message: "Título e conteúdo são obrigatórios." });
   }
-  const novaNota = new Nota({ titulo, conteudo, email: req.usuario.email });
-  await novaNota.save();
-  res.status(201).json({ message: "Nota salva com sucesso!" });
+
+  try {
+    const novaNota = new Nota({ titulo, conteudo });
+    await novaNota.save();
+    res.status(201).json({ message: "Nota criada com sucesso!", nota: novaNota });
+  } catch (error) {
+    console.error("Erro ao salvar nota:", error);
+    res.status(500).json({ message: "Erro ao salvar nota." });
+  }
 });
 
+// Inicialização do servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
