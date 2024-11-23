@@ -1,19 +1,16 @@
 {
-  "name": "backend",
+  "name": "backend-bloco-de-notas",
   "version": "1.0.0",
-  "description": "Backend para o aplicativo de bloco de notas",
+  "description": "Backend para o bloco de notas",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
+    "dotenv": "^16.0.3",
     "cors": "^2.8.5",
-    "mongoose": "^6.0.8",
-    "bcrypt": "^5.0.1",
-    "jsonwebtoken": "^8.5.1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.4"
+  }
 }
