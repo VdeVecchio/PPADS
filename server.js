@@ -6,8 +6,9 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
+// Configuração do CORS para permitir requisições do frontend hospedado no Vercel
 app.use(cors({
-  origin: 'https://ppads-git-main-vincius-projects-d504bb97.vercel.app/',
+  origin: 'https://ppads-vincius-projects-d504bb97.vercel.app', // URL do frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -44,7 +45,7 @@ const Usuario = mongoose.model('Usuario', usuarioSchema);
 app.post('/register', async (req, res) => {
   const { email, senha } = req.body;
   const usuarioExistente = await Usuario.findOne({ email });
-  
+
   if (usuarioExistente) {
     return res.status(400).json({ message: 'Usuário já existe' });
   }
@@ -52,7 +53,7 @@ app.post('/register', async (req, res) => {
   const senhaHash = await bcrypt.hash(senha, 10);
   const novoUsuario = new Usuario({ email, senha: senhaHash });
   await novoUsuario.save();
-  
+
   res.status(201).send('Usuário registrado com sucesso');
 });
 
@@ -110,7 +111,7 @@ app.put('/notas/:id', autenticarToken, async (req, res) => {
   const { id } = req.params;
   const { titulo, conteudo } = req.body;
   const nota = await Nota.findById(id);
-  
+
   if (nota && nota.email === req.usuario.email) {
     nota.titulo = titulo;
     nota.conteudo = conteudo;
