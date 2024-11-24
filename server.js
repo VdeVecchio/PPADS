@@ -6,133 +6,93 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-// Configuração do CORS para permitir requisições do frontend hospedado no Vercel
+// Configuração do CORS
 app.use(cors({
-  origin: '*', // URL do frontend 
+  origin: "https://ppads-two.vercel.app", // URL do frontend hospedado
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'], // Permite o cabeçalho Authorization
 }));
 
 // Middleware para interpretar JSON
 app.use(express.json());
 
-// Conexão com o MongoDB Atlas
+// Conexão com o MongoDB
 mongoose.connect(process.env.DATABASE_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log('Conectado ao MongoDB Atlas'))
-.catch((error) => console.error('Erro de conexão com MongoDB:', error));
+.catch((error) => console.error('Erro ao conectar ao MongoDB:', error));
 
-// Configuração do esquema e modelos de dados
-const notaSchema = new mongoose.Schema({
+// Modelos
+const Nota = mongoose.model('Nota', new mongoose.Schema({
   titulo: String,
   conteudo: String,
   email: String,
-});
+}));
 
-const usuarioSchema = new mongoose.Schema({
-  email: String,
-  senha: String,
-});
+const Usuario = mongoose.model('Usuario', new mongoose.Schema({
+  email: { type: String, unique: true, required: true },
+  senha: { type: String, required: true },
+}));
 
-const Nota = mongoose.model('Nota', notaSchema);
-const Usuario = mongoose.model('Usuario', usuarioSchema);
+// Middleware para autenticar token
+function autenticarToken(req, res, next) {
+  const token = req.headers['authorization']?.split(" ")[1];
 
-// Configuração de rotas
+  if (!token) {
+    return res.status(401).json({ message: 'Acesso negado. Token não fornecido.' });
+  }
 
-// Rota para registrar usuário
+  jwt.verify(token, process.env.SECRET, (err, usuario) => {
+    if (err) return res.status(403).json({ message: 'Token inválido ou expirado.' });
+    req.usuario = usuario;
+    next();
+  });
+}
+
+// Rotas
 app.post('/register', async (req, res) => {
   const { email, senha } = req.body;
   const usuarioExistente = await Usuario.findOne({ email });
 
   if (usuarioExistente) {
-    return res.status(400).json({ message: 'Usuário já existe' });
+    return res.status(400).json({ message: 'Usuário já existe.' });
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);
   const novoUsuario = new Usuario({ email, senha: senhaHash });
   await novoUsuario.save();
-
-  res.status(201).send('Usuário registrado com sucesso');
+  res.status(201).send('Usuário registrado com sucesso.');
 });
 
-// Rota para login
 app.post('/login', async (req, res) => {
   const { email, senha } = req.body;
   const usuario = await Usuario.findOne({ email });
 
   if (!usuario) {
-    return res.status(400).json({ message: 'Email ou senha inválidos' });
+    return res.status(400).json({ message: 'Email ou senha inválidos.' });
   }
 
   const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
   if (!senhaCorreta) {
-    return res.status(400).json({ message: 'Email ou senha inválidos' });
+    return res.status(400).json({ message: 'Email ou senha inválidos.' });
   }
 
   const token = jwt.sign({ email: usuario.email }, process.env.SECRET, { expiresIn: '1h' });
   res.json({ token });
 });
 
-// Middleware para autenticar token
-function autenticarToken(req, res, next) {
-  const token = req.headers['authorization'];
-
-  if (!token) {
-    return res.status(401).json({ message: 'Acesso negado' });
-  }
-
-  jwt.verify(token, process.env.SECRET, (err, usuario) => {
-    if (err) return res.status(403).json({ message: 'Token inválido' });
-    req.usuario = usuario;
-    next();
-  });
-}
-
-// Rotas para notas
-
-// Criar uma nova nota
-app.post('/notas', autenticarToken, async (req, res) => {
-  const { titulo, conteudo } = req.body;
-  const novaNota = new Nota({ titulo, conteudo, email: req.usuario.email });
-  await novaNota.save();
-  res.status(201).send('Nota criada com sucesso');
-});
-
-// Obter todas as notas do usuário
 app.get('/notas', autenticarToken, async (req, res) => {
   const notasUsuario = await Nota.find({ email: req.usuario.email });
   res.json(notasUsuario);
 });
 
-// Atualizar uma nota por ID
-app.put('/notas/:id', autenticarToken, async (req, res) => {
-  const { id } = req.params;
+app.post('/notas', autenticarToken, async (req, res) => {
   const { titulo, conteudo } = req.body;
-  const nota = await Nota.findById(id);
-
-  if (nota && nota.email === req.usuario.email) {
-    nota.titulo = titulo;
-    nota.conteudo = conteudo;
-    await nota.save();
-    res.status(200).send('Nota atualizada com sucesso');
-  } else {
-    res.status(404).send('Nota não encontrada ou sem permissão');
-  }
-});
-
-// Excluir uma nota por ID
-app.delete('/notas/:id', autenticarToken, async (req, res) => {
-  const { id } = req.params;
-  const nota = await Nota.findById(id);
-
-  if (nota && nota.email === req.usuario.email) {
-    await Nota.findByIdAndDelete(id);
-    res.status(200).send('Nota excluída com sucesso');
-  } else {
-    res.status(404).send('Nota não encontrada ou sem permissão');
-  }
+  const novaNota = new Nota({ titulo, conteudo, email: req.usuario.email });
+  await novaNota.save();
+  res.status(201).send('Nota criada com sucesso.');
 });
 
 // Inicializar o servidor
