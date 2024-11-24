@@ -28,7 +28,7 @@ mongoose.connect(process.env.DATABASE_URI, {
 const Nota = mongoose.model('Nota', new mongoose.Schema({
   titulo: String,
   conteudo: String,
-  email: String,
+  email: String, // Associar nota ao usuário autenticado
 }));
 
 const Usuario = mongoose.model('Usuario', new mongoose.Schema({
@@ -83,16 +83,59 @@ app.post('/login', async (req, res) => {
   res.json({ token });
 });
 
+// Listar Notas
 app.get('/notas', autenticarToken, async (req, res) => {
   const notasUsuario = await Nota.find({ email: req.usuario.email });
   res.json(notasUsuario);
 });
 
+// Criar Nota
 app.post('/notas', autenticarToken, async (req, res) => {
   const { titulo, conteudo } = req.body;
   const novaNota = new Nota({ titulo, conteudo, email: req.usuario.email });
   await novaNota.save();
   res.status(201).send('Nota criada com sucesso.');
+});
+
+// Atualizar Nota
+app.put('/notas/:id', autenticarToken, async (req, res) => {
+  const { id } = req.params;
+  const { titulo, conteudo } = req.body;
+
+  try {
+    const notaAtualizada = await Nota.findOneAndUpdate(
+      { _id: id, email: req.usuario.email },
+      { titulo, conteudo },
+      { new: true }
+    );
+
+    if (!notaAtualizada) {
+      return res.status(404).json({ message: 'Nota não encontrada.' });
+    }
+
+    res.status(200).json({ message: 'Nota atualizada com sucesso.', nota: notaAtualizada });
+  } catch (error) {
+    console.error('Erro ao atualizar nota:', error);
+    res.status(500).json({ message: 'Erro ao atualizar nota.' });
+  }
+});
+
+// Excluir Nota
+app.delete('/notas/:id', autenticarToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const notaExcluida = await Nota.findOneAndDelete({ _id: id, email: req.usuario.email });
+
+    if (!notaExcluida) {
+      return res.status(404).json({ message: 'Nota não encontrada.' });
+    }
+
+    res.status(200).json({ message: 'Nota excluída com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao excluir nota:', error);
+    res.status(500).json({ message: 'Erro ao excluir nota.' });
+  }
 });
 
 // Inicializar o servidor
