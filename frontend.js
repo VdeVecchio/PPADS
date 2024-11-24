@@ -1,4 +1,5 @@
 const API_URL = "https://backend-bloco-de-notas.onrender.com";
+let notaAtual = null; // Armazena a nota que está sendo editada
 
 // Verifica se o usuário está autenticado
 if (!localStorage.getItem("token")) {
@@ -51,31 +52,51 @@ function exibirNotas(notas) {
     excluirBtn.onclick = () => excluirNota(nota._id);
 
     item.appendChild(textoNota);
-    item.appendChild(editarBtn);
-    item.appendChild(excluirBtn);
+    const botoesContainer = document.createElement("div");
+    botoesContainer.className = "d-flex align-items-center"; // Mantém os botões fixos
+    botoesContainer.appendChild(editarBtn);
+    botoesContainer.appendChild(excluirBtn);
+
+    item.appendChild(botoesContainer);
     lista.appendChild(item);
   });
 }
 
-// Função para salvar uma nova nota
-async function salvarNota(titulo, conteudo) {
+// Função para salvar ou atualizar uma nota
+async function salvarNota() {
+  const titulo = document.querySelector("#notaTitulo").value;
+  const conteudo = document.querySelector("#notaContent").value;
+
   try {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_URL}/notas`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ titulo, conteudo }),
-    });
 
-    if (!response.ok) {
-      throw new Error("Erro ao salvar nota");
+    // Verifica se está editando uma nota existente
+    if (notaAtual) {
+      await fetch(`${API_URL}/notas/${notaAtual}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ titulo, conteudo }),
+      });
+      alert("Nota atualizada com sucesso!");
+      notaAtual = null; // Reseta o ID da nota atual após edição
+    } else {
+      await fetch(`${API_URL}/notas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ titulo, conteudo }),
+      });
+      alert("Nota criada com sucesso!");
     }
 
-    alert("Nota salva com sucesso!");
     carregarNotas(); // Atualiza a lista de notas
+    document.querySelector("#notaTitulo").value = "";
+    document.querySelector("#notaContent").value = "";
   } catch (error) {
     console.error(error.message);
     alert("Erro ao salvar nota: " + error.message);
@@ -86,6 +107,7 @@ async function salvarNota(titulo, conteudo) {
 function editarNota(nota) {
   document.querySelector("#notaTitulo").value = nota.titulo;
   document.querySelector("#notaContent").value = nota.conteudo;
+  notaAtual = nota._id; // Armazena o ID da nota sendo editada
 }
 
 // Função para excluir nota
@@ -120,10 +142,6 @@ function logout() {
 
 // Inicializa os eventos e carrega as notas
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelector("#criarNotaButton").onclick = () => {
-    const titulo = document.querySelector("#notaTitulo").value;
-    const conteudo = document.querySelector("#notaContent").value;
-    salvarNota(titulo, conteudo);
-  };
+  document.querySelector("#criarNotaButton").onclick = salvarNota;
   carregarNotas();
 });
