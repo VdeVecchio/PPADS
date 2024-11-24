@@ -73,6 +73,7 @@ app.post("/register", async (req, res) => {
 
     const novoUsuario = new Usuario({ email, senha });
     await novoUsuario.save();
+
     res.status(201).json({ message: "Usuário registrado com sucesso!" });
   } catch (error) {
     console.error("Erro ao registrar usuário:", error);
